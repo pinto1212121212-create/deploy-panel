@@ -18,20 +18,22 @@ h1{text-align:center;font-size:22px;margin-bottom:6px;color:#5eead4}
 .site-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .site-name{font-size:16px;font-weight:800;color:white}
 .site-repo{font-size:11px;color:#475569;margin-top:2px}
-.site-actions{display:flex;gap:8px;align-items:center}
-.deploy-btn{background:linear-gradient(135deg,#0d9488,#0f766e);border:none;border-radius:10px;padding:9px 16px;color:white;font-weight:700;cursor:pointer;font-size:13px;font-family:inherit;display:flex;align-items:center;gap:6px}
+.deploy-btn{background:linear-gradient(135deg,#0d9488,#0f766e);border:none;border-radius:10px;padding:10px 16px;color:white;font-weight:700;cursor:pointer;font-size:13px;font-family:inherit;width:100%}
 .deploy-btn:disabled{opacity:.5}
-.status{font-size:11px;color:#5eead4;margin-top:8px;min-height:16px}
-.add-site{background:#1e293b;border:2px dashed #334155;border-radius:16px;padding:16px;text-align:center;cursor:pointer;color:#475569;font-size:14px;font-weight:700;margin-top:8px;font-family:inherit;width:100%}
-.add-site:hover{border-color:#5eead4;color:#5eead4}
-.add-form{background:#1e293b;border-radius:16px;padding:16px;border:1px solid #0d9488;margin-top:8px;display:none}
+.status{font-size:12px;color:#5eead4;margin-top:8px;min-height:16px;text-align:center}
+.status.err{color:#f87171}
+.add-btn{background:linear-gradient(135deg,#7c3aed,#5b21b6);border:none;border-radius:16px;padding:16px;text-align:center;color:white;font-size:14px;font-weight:700;margin-top:8px;font-family:inherit;width:100%;cursor:pointer}
+.add-form{background:#1e293b;border-radius:16px;padding:16px;border:1px solid #7c3aed;margin-top:8px;display:none}
 .add-form.show{display:block}
 .add-inp{width:100%;background:#0f172a;border:1px solid #334155;border-radius:10px;padding:10px 14px;color:white;font-size:14px;outline:none;text-align:right;font-family:inherit;margin-bottom:8px}
 .add-inp:focus{border-color:#5eead4}
-.add-btns{display:flex;gap:8px}
-.btn-save{flex:1;background:#0d9488;border:none;border-radius:10px;padding:10px;color:white;font-weight:700;cursor:pointer;font-family:inherit}
-.btn-cancel{flex:1;background:#334155;border:none;border-radius:10px;padding:10px;color:white;font-weight:700;cursor:pointer;font-family:inherit}
+.add-btns{display:flex;gap:8px;margin-top:10px}
+.btn-save{flex:1;background:#7c3aed;border:none;border-radius:10px;padding:11px;color:white;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-cancel{flex:1;background:#334155;border:none;border-radius:10px;padding:11px;color:white;font-weight:700;cursor:pointer;font-family:inherit}
 .del-btn{background:#7f1d1d;border:none;border-radius:8px;padding:6px 10px;color:#fca5a5;cursor:pointer;font-size:11px;font-family:inherit}
+.prog{background:#0f172a;border-radius:8px;overflow:hidden;margin-top:8px;height:6px;display:none}
+.prog-bar{height:100%;background:linear-gradient(90deg,#0d9488,#5eead4);border-radius:8px;transition:width .4s}
+.step{font-size:11px;color:#64748b;margin-top:4px;text-align:center;min-height:16px}
 </style>
 </head>
 <body>
@@ -45,15 +47,21 @@ h1{text-align:center;font-size:22px;margin-bottom:6px;color:#5eead4}
 
 <div class="sites-grid" id="sites-grid"></div>
 
-<button class="add-site" onclick="toggleAddForm()">+ הוסף אתר חדש</button>
+<button class="add-btn" onclick="toggleAddForm()">✨ הוסף אתר חדש — הכל אוטומטי</button>
 
 <div class="add-form" id="add-form">
-  <input class="add-inp" id="new-name" placeholder="שם האתר (למשל: הודיה)">
-  <input class="add-inp" id="new-repo" placeholder="שם הריפו בגיטהאב (למשל: therapy-hodaya)" dir="ltr">
-  <input class="add-inp" id="new-owner" placeholder="שם המשתמש בגיטהאב" dir="ltr" value="pinto1212121212-create">
+  <div style="font-size:12px;color:#5eead4;margin-bottom:12px;text-align:center">העלה קובץ ← ריפו נוצר + Pages מופעל אוטומטית 🎉</div>
+  <input class="add-inp" id="new-name" placeholder="שם האתר (למשל: אתר רינת)">
+  <input class="add-inp" id="new-repo" placeholder="שם ריפו (למשל: rinat-site)" dir="ltr">
+  <input class="add-inp" id="new-owner" placeholder="שם משתמש גיטהאב" dir="ltr" value="pinto1212121212-create">
+  <input type="file" accept=".html" id="new-file" style="display:none" onchange="document.getElementById('new-file-lbl').textContent=this.files[0]?'📄 '+this.files[0].name:''">
+  <button class="deploy-btn" onclick="document.getElementById('new-file').click()" style="margin-bottom:6px">📁 בחר קובץ HTML</button>
+  <div id="new-file-lbl" style="font-size:12px;color:#5eead4;text-align:center;min-height:16px;margin-bottom:4px"></div>
+  <div class="prog" id="new-prog"><div class="prog-bar" id="new-progbar" style="width:0%"></div></div>
+  <div class="step" id="new-step"></div>
   <div class="add-btns">
     <button class="btn-cancel" onclick="toggleAddForm()">ביטול</button>
-    <button class="btn-save" onclick="addSite()">➕ הוסף</button>
+    <button class="btn-save" id="btn-create" onclick="createAndDeploy()">🚀 צור ופרסם!</button>
   </div>
 </div>
 
@@ -70,95 +78,103 @@ function saveToken(){const t=document.getElementById('gh-token').value.trim();if
 
 function renderSites(){
   const grid=document.getElementById('sites-grid');
-  const sites=getSites();
-  const token=getToken();
-  if(!token){
-    document.getElementById('gh-token').placeholder='הכנס GitHub Token קודם...';
-  }
-  grid.innerHTML=sites.map(s=>`
+  grid.innerHTML=getSites().map(s=>`
     <div class="site-card">
       <div class="site-card-top">
-        <div>
-          <div class="site-name">${s.name}</div>
-          <div class="site-repo">${s.owner}/${s.repo}</div>
-        </div>
-        <div class="site-actions">
-          <button class="del-btn" onclick="deleteSite('${s.id}')">🗑</button>
-        </div>
+        <div><div class="site-name">${s.name}</div><div class="site-repo">${s.owner}/${s.repo}</div></div>
+        <button class="del-btn" onclick="deleteSite('${s.id}')">🗑</button>
       </div>
       <input type="file" accept=".html" id="file-${s.id}" style="display:none" onchange="doUpload('${s.id}','${s.repo}','${s.owner}',this)">
-      <button class="deploy-btn" id="btn-${s.id}" onclick="document.getElementById('file-${s.id}').click()">
-        🚀 בחר קובץ ופרסם
-      </button>
+      <button class="deploy-btn" id="btn-${s.id}" onclick="document.getElementById('file-${s.id}').click()">🚀 בחר קובץ ופרסם</button>
+      <div class="prog" id="prog-${s.id}"><div class="prog-bar" id="progbar-${s.id}" style="width:0%"></div></div>
       <div class="status" id="status-${s.id}"></div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-function doUpload(id,repo,owner,input){
-  const file=input.files[0];
-  if(!file)return;
-  const token=getToken();
-  if(!token){alert('נא להכניס GitHub Token קודם');return;}
-  const btn=document.getElementById('btn-'+id);
-  const status=document.getElementById('status-'+id);
-  btn.disabled=true;btn.textContent='⏳ מעלה...';status.textContent='';
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    const content=ev.target.result;
+async function doUpload(id,repo,owner,input){
+  const file=input.files[0];if(!file)return;
+  const token=getToken();if(!token){alert('נא להכניס Token');return;}
+  const btn=document.getElementById('btn-'+id),status=document.getElementById('status-'+id);
+  const prog=document.getElementById('prog-'+id),progbar=document.getElementById('progbar-'+id);
+  btn.disabled=true;btn.textContent='⏳ מעלה...';prog.style.display='block';progbar.style.width='20%';
+  status.textContent='קורא קובץ...';status.className='status';
+  try{
+    const content=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsText(file);});
     const encoded=btoa(unescape(encodeURIComponent(content)));
+    progbar.style.width='50%';status.textContent='מעלה...';
     const apiUrl=`https://api.github.com/repos/${owner}/${repo}/contents/index.html`;
-    fetch(apiUrl,{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}})
-      .then(r=>r.json())
-      .then(data=>{
-        const body={message:'Update from deploy panel',content:encoded};
-        if(data.sha)body.sha=data.sha;
-        return fetch(apiUrl,{method:'PUT',headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(body)});
-      })
-      .then(r=>r.json())
-      .then(d=>{
-        if(d.content){
-          btn.textContent='✅ עלה בהצלחה!';btn.style.background='#059669';
-          status.textContent='האתר יתעדכן תוך דקה';
-          setTimeout(()=>{btn.textContent='🚀 בחר קובץ ופרסם';btn.disabled=false;btn.style.background='';status.textContent='';input.value='';},4000);
-        } else {
-          btn.textContent='❌ שגיאה';btn.disabled=false;
-          status.textContent=d.message||'נסה שוב';
-          setTimeout(()=>{btn.textContent='🚀 בחר קובץ ופרסם';status.textContent='';},3000);
-        }
-      })
-      .catch(()=>{btn.textContent='❌ שגיאה';btn.disabled=false;setTimeout(()=>{btn.textContent='🚀 בחר קובץ ופרסם';},3000);});
-  };
-  reader.readAsText(file);
+    const chk=await (await fetch(apiUrl,{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}})).json();
+    const body={message:'Update from deploy panel',content:encoded};if(chk.sha)body.sha=chk.sha;
+    progbar.style.width='80%';
+    const d=await (await fetch(apiUrl,{method:'PUT',headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(body)})).json();
+    progbar.style.width='100%';
+    if(d.content){btn.textContent='✅ עלה!';btn.style.background='#059669';status.textContent='האתר יתעדכן תוך דקה';
+      setTimeout(()=>{btn.textContent='🚀 בחר קובץ ופרסם';btn.disabled=false;btn.style.background='';status.textContent='';prog.style.display='none';progbar.style.width='0%';input.value='';},4000);
+    }else{throw new Error(d.message||'שגיאה');}
+  }catch(e){btn.textContent='❌ שגיאה';btn.disabled=false;status.textContent=e.message;status.className='status err';
+    setTimeout(()=>{btn.textContent='🚀 בחר קובץ ופרסם';prog.style.display='none';progbar.style.width='0%';},3000);}
 }
 
-function toggleAddForm(){
-  const f=document.getElementById('add-form');
-  f.classList.toggle('show');
-}
-
-function addSite(){
+async function createAndDeploy(){
   const name=document.getElementById('new-name').value.trim();
   const repo=document.getElementById('new-repo').value.trim();
   const owner=document.getElementById('new-owner').value.trim();
-  if(!name||!repo||!owner){alert('נא למלא את כל השדות');return;}
-  const sites=getSites();
-  sites.push({id:'site_'+Date.now(),name,repo,owner});
-  saveSites(sites);
-  document.getElementById('new-name').value='';
-  document.getElementById('new-repo').value='';
-  toggleAddForm();
-  renderSites();
+  const file=document.getElementById('new-file').files[0];
+  const token=getToken();
+  if(!name||!repo)return alert('נא למלא שם ושם ריפו');
+  if(!file)return alert('נא לבחור קובץ HTML');
+  if(!token)return alert('נא להכניס Token קודם');
+
+  const btn=document.getElementById('btn-create');
+  const prog=document.getElementById('new-prog'),progbar=document.getElementById('new-progbar'),step=document.getElementById('new-step');
+  btn.disabled=true;prog.style.display='block';
+
+  try{
+    step.textContent='📄 קורא קובץ...';progbar.style.width='10%';
+    const content=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsText(file);});
+    const encoded=btoa(unescape(encodeURIComponent(content)));
+
+    step.textContent='🏗️ יוצר ריפו בגיטהאב...';progbar.style.width='25%';
+    const cr=await (await fetch('https://api.github.com/user/repos',{method:'POST',
+      headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
+      body:JSON.stringify({name:repo,private:false,auto_init:false})})).json();
+    if(cr.errors&&!cr.message?.includes('already exist'))throw new Error(cr.message);
+    if(!cr.message?.includes('already exist'))await new Promise(r=>setTimeout(r,1500));
+
+    step.textContent='⬆️ מעלה קובץ...';progbar.style.width='55%';
+    const apiUrl=`https://api.github.com/repos/${owner}/${repo}/contents/index.html`;
+    const chk=await (await fetch(apiUrl,{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}})).json();
+    const body={message:'Initial deploy',content:encoded};if(chk.sha)body.sha=chk.sha;
+    const up=await (await fetch(apiUrl,{method:'PUT',headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(body)})).json();
+    if(!up.content)throw new Error(up.message||'שגיאה בהעלאה');
+
+    step.textContent='🌐 מפעיל GitHub Pages...';progbar.style.width='80%';
+    await fetch(`https://api.github.com/repos/${owner}/${repo}/pages`,{method:'POST',
+      headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
+      body:JSON.stringify({source:{branch:'main',path:'/'}})});
+
+    progbar.style.width='100%';step.textContent='';
+
+    const sites=getSites();
+    sites.push({id:'site_'+Date.now(),name,repo,owner});
+    saveSites(sites);
+
+    ['new-name','new-repo'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('new-file-lbl').textContent='';
+    document.getElementById('new-file').value='';
+    document.getElementById('add-form').classList.remove('show');
+    renderSites();
+
+    setTimeout(()=>alert(`✅ הצלחה!\n\nהאתר יהיה זמין בעוד דקה:\nhttps://${owner}.github.io/${repo}`),300);
+
+  }catch(e){
+    step.textContent='❌ '+e.message;btn.disabled=false;
+    setTimeout(()=>{step.textContent='';prog.style.display='none';progbar.style.width='0%';},4000);
+  }
 }
 
-function deleteSite(id){
-  if(!confirm('למחוק אתר זה?'))return;
-  const sites=getSites().filter(s=>s.id!==id);
-  saveSites(sites);
-  renderSites();
-}
-
-// Load token if saved
+function toggleAddForm(){document.getElementById('add-form').classList.toggle('show');}
+function deleteSite(id){if(!confirm('למחוק מהרשימה?'))return;saveSites(getSites().filter(s=>s.id!==id));renderSites();}
 window.onload=()=>{renderSites();};
 </script>
 </body>
