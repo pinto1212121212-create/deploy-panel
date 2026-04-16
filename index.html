@@ -99,6 +99,18 @@ h1{text-align:center;font-size:22px;margin-bottom:4px;color:#5eead4}
 
 <div class="toast" id="toast"></div>
 
+<div id="del-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#1e293b;border-radius:16px;padding:24px;margin:20px;border:1px solid #f87171;text-align:center">
+    <div style="font-size:32px;margin-bottom:8px">🗑</div>
+    <div id="del-modal-name" style="font-size:16px;font-weight:700;margin-bottom:6px"></div>
+    <div style="font-size:13px;color:#94a3b8;margin-bottom:20px">למחוק מהרשימה?</div>
+    <div style="display:flex;gap:10px">
+      <button onclick="closeDelModal()" style="flex:1;background:#334155;border:none;border-radius:10px;padding:12px;color:white;font-weight:700;cursor:pointer;font-size:14px;font-family:inherit">ביטול</button>
+      <button onclick="doDelete()" style="flex:1;background:#dc2626;border:none;border-radius:10px;padding:12px;color:white;font-weight:700;cursor:pointer;font-size:14px;font-family:inherit">מחק</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const DEFAULT_SITES=[
   {id:'panel',    name:'🚀 לוח פרסום',                 repo:'deploy-panel',   owner:'pinto1212121212-create'},
@@ -110,13 +122,25 @@ const DEFAULT_SITES=[
 
 function getSites(){
   try{
-    const saved=JSON.parse(localStorage.getItem('deploy_sites'))||[];
-    // תמיד מוסיף DEFAULT_SITES שחסרים
-    const ids=saved.map(s=>s.id);
-    const merged=[...saved];
-    DEFAULT_SITES.forEach(d=>{if(!ids.includes(d.id))merged.push(d);});
-    return merged;
+    const saved=localStorage.getItem('deploy_sites');
+    if(saved!==null)return JSON.parse(saved);
+    return DEFAULT_SITES;
   }catch(e){return DEFAULT_SITES;}
+}
+function initSites(){
+  // רק אם אין בכלל נתונים — טוען DEFAULT
+  if(localStorage.getItem('deploy_sites')===null){
+    saveSites(DEFAULT_SITES);
+  } else {
+    // מוסיף רק אתרים חדשים שלא קיימים ולא נמחקו
+    const saved=getSites();
+    const ids=saved.map(s=>s.id);
+    let changed=false;
+    DEFAULT_SITES.forEach(d=>{
+      if(!ids.includes(d.id)){saved.push(d);changed=true;}
+    });
+    if(changed)saveSites(saved);
+  }
 }
 function saveSites(s){localStorage.setItem('deploy_sites',JSON.stringify(s));}
 function getToken(){return localStorage.getItem('gh_deploy_token')||'';}
@@ -157,8 +181,10 @@ function renderSites(){
           <a class="site-link" href="${url}" target="_blank">🌐 פתח אתר</a>
         </div>
         <div class="card-actions">
-          <button class="edit-btn" onclick="openEditor('${s.repo}','${s.owner}','${s.name}')">✏️ ערוך</button>
-          <button class="del-btn" onclick="deleteSite('${s.id}')">🗑</button>
+          <button class="edit-btn" onclick="moveSite('${s.id}',-1)" style="padding:6px 8px">▲</button>
+          <button class="edit-btn" onclick="moveSite('${s.id}',1)" style="padding:6px 8px">▼</button>
+          <button class="edit-btn" onclick="openEditor('${s.repo}','${s.owner}','${s.name}')">✏️</button>
+          <button class="del-btn" onclick="confirmDelete('${s.id}','${s.name}')">🗑</button>
         </div>
       </div>
       <input type="file" accept=".html" id="file-${s.id}" style="display:none" onchange="doUpload('${s.id}','${s.repo}','${s.owner}',this)">
@@ -197,6 +223,12 @@ async function doUpload(id,repo,owner,input){
     pb.style.width='100%';
     btn.textContent='✅ עלה!';btn.style.background='#059669';st.textContent='יתעדכן תוך ~דקה';
     toast('✅ '+repo+' עלה בהצלחה!');
+    // אם עדכנו את הצינור עצמו — נרענן אחרי 4 שניות
+    if(repo==='deploy-panel'){
+      st.textContent='מרענן...';
+      setTimeout(()=>location.reload(),4000);
+      return;
+    }
     setTimeout(()=>{btn.textContent='🚀 בחר קובץ ופרסם';btn.disabled=false;btn.style.background='';st.textContent='';prog.style.display='none';pb.style.width='0%';input.value='';},4000);
   }catch(e){
     btn.textContent='❌ שגיאה';btn.disabled=false;st.textContent=e.message;st.className='card-status err';
@@ -250,7 +282,28 @@ async function createAndDeploy(){
 }
 
 function toggleAddForm(){document.getElementById('add-form').classList.toggle('show');}
-function deleteSite(id){if(!confirm('למחוק מהרשימה?'))return;saveSites(getSites().filter(s=>s.id!==id));renderSites();}
+function moveSite(id,dir){
+  const sites=getSites();
+  const i=sites.findIndex(s=>s.id===id);
+  const j=i+dir;
+  if(j<0||j>=sites.length)return;
+  [sites[i],sites[j]]=[sites[j],sites[i]];
+  saveSites(sites);renderSites();
+}
+let _delId='';
+function confirmDelete(id,name){
+  _delId=id;
+  document.getElementById('del-modal-name').textContent=name;
+  document.getElementById('del-modal').style.display='flex';
+}
+function closeDelModal(){document.getElementById('del-modal').style.display='none';_delId='';}
+function doDelete(){
+  if(!_delId)return;
+  saveSites(getSites().filter(s=>s.id!==_delId));
+  closeDelModal();renderSites();
+  toast('🗑 נמחק');
+}
+function deleteSite(id){saveSites(getSites().filter(s=>s.id!==id));renderSites();}
 
 let editCtx={repo:'',owner:'',sha:''};
 async function openEditor(repo,owner,name){
@@ -299,7 +352,7 @@ async function saveEdit(){
   }
 }
 
-window.onload=()=>{showTokenStatus();renderSites();};
+window.onload=()=>{initSites();showTokenStatus();renderSites();};
 </script>
 </body>
 </html>
