@@ -108,7 +108,16 @@ const DEFAULT_SITES=[
   {id:'laregesh', name:'🌸 בית לרגש',                  repo:'beit-laregesh',  owner:'pinto1212121212-create'},
 ];
 
-function getSites(){try{return JSON.parse(localStorage.getItem('deploy_sites'))||DEFAULT_SITES;}catch(e){return DEFAULT_SITES;}}
+function getSites(){
+  try{
+    const saved=JSON.parse(localStorage.getItem('deploy_sites'))||[];
+    // תמיד מוסיף DEFAULT_SITES שחסרים
+    const ids=saved.map(s=>s.id);
+    const merged=[...saved];
+    DEFAULT_SITES.forEach(d=>{if(!ids.includes(d.id))merged.push(d);});
+    return merged;
+  }catch(e){return DEFAULT_SITES;}
+}
 function saveSites(s){localStorage.setItem('deploy_sites',JSON.stringify(s));}
 function getToken(){return localStorage.getItem('gh_deploy_token')||'';}
 
